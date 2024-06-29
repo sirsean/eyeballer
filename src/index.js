@@ -5,6 +5,12 @@ import { v4 as uuidv4 } from "uuid";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import express from "express";
+import path, { dirname } from "path";
+import { fileURLToPath } from 'url';
+import { createProxyMiddleware } from "http-proxy-middleware";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // constants
 
@@ -82,6 +88,7 @@ const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+// serve the images
 app.get('/image/:id.png', asyncHandler(async (req, res) => {
   const id = req.params.id;
   console.log(`get image ${id}`);
@@ -96,6 +103,7 @@ app.get('/image/:id.png', asyncHandler(async (req, res) => {
   obj.Body.pipe(res);
 }));
 
+// serve the metadata
 app.get('/metadata/:id.json', asyncHandler(async (req, res) => {
   const id = req.params.id;
   console.log(`get metadata ${id}`);
@@ -109,6 +117,23 @@ app.get('/metadata/:id.json', asyncHandler(async (req, res) => {
   res.set('Content-Type', 'application/json');
   obj.Body.pipe(res);
 }));
+
+if (process.env.NODE_ENV === "production") {
+  // serve static files from vite-app
+  app.use(express.static(path.join(__dirname, '..', 'dist')));
+  
+  // handle all other routes within vite-app
+  app.get('*', asyncHandler(async (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  }));
+} else {
+  // proxy vite development server
+  app.use('/', createProxyMiddleware({
+    target: 'http://localhost:5173',
+    changeOrigin: true,
+    ws: true,
+  }));
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
