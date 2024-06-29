@@ -1,0 +1,22 @@
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.606.0",
+    "@aws-sdk/lib-storage": "^3.606.0",
+    "@types/node": "^18.0.6",
+    "commander": "^12.1.0",
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2",
+    "uuid": "^10.0.0"
+  }
+}
