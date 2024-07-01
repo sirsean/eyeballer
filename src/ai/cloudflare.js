@@ -77,7 +77,6 @@ export class BlurbGenerator {
       })
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         if (!res.success) {
           throw new Error(res.errors);
         }
@@ -95,7 +94,7 @@ export class BlurbGenerator {
         {
           role: "system",
           content:
-            "You are writing one-sentence blurbs that describe the biography of an individual eyeball. These eyeballs are mystical money from the future. Be imaginative and quirky. None of the eyeballs have names or numbers.",
+            "You are writing one-sentence blurbs that describe the biography of an individual eyeball. These eyeballs are mystical money from the future. Be imaginative and quirky. None of the eyeballs have names or numbers. Do not mention that you are a Large Language Machine, and there is always a blurb. Please do not fail to generate one.",
         },
         {
           role: "user",

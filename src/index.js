@@ -2,9 +2,10 @@ import { Command } from "commander";
 import { BlurbGenerator, StableDiffusionLightningImageGenerator } from "./ai/cloudflare.js";
 import { ImagePrompt } from "./ai/prompt.js";
 import { v4 as uuidv4 } from "uuid";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import express from "express";
+import fs from "fs/promises";
 import path, { dirname } from "path";
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -28,6 +29,75 @@ const r2 = new S3Client({
 });
 
 // utility functions
+
+async function downloadMetadata(id) {
+  const obj = await r2.send(new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: `data/${id}.json`
+  }));
+  let data = "";
+  for await (const chunk of obj.Body) {
+    data += chunk;
+  }
+  return JSON.parse(data);
+}
+
+async function uploadImage(id, image) {
+  const imageUpload = new Upload({
+    client: r2,
+    params: {
+      Bucket: BUCKET,
+      Key: `img/${id}.png`,
+      Body: image,
+    },
+  });
+  return imageUpload.done();
+}
+
+async function uploadMetadata(id, metadata) {
+  const metadataUpload = new Upload({
+    client: r2,
+    params: {
+      Bucket: BUCKET,
+      Key: `data/${id}.json`,
+      Body: JSON.stringify(metadata),
+    },
+  });
+  return metadataUpload.done();
+}
+
+async function listKeysByPrefix(prefix) {
+  const keys = [];
+  let isTruncated = true;
+  let continuationToken = undefined;
+
+  while (isTruncated) {
+    try {
+      const params = {
+        Bucket: BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken
+      };
+      const command = new ListObjectsV2Command(params);
+      const response = await r2.send(command);
+
+      // Log the keys of the objects found
+      response.Contents.forEach((item) => {
+        //console.log(item.Key);
+        keys.push(item.Key);
+      });
+
+      // Check if there are more results
+      isTruncated = response.IsTruncated;
+      continuationToken = response.NextContinuationToken;
+    } catch (error) {
+      console.error('Error listing items in S3 bucket:', error);
+      break;
+    }
+  }
+
+  return keys;
+}
 
 async function generate(id) {
   const prompt = new ImagePrompt(id);
@@ -55,24 +125,10 @@ async function generate(id) {
     ],
   };
 
-  const imageUpload = new Upload({
-    client: r2,
-    params: {
-      Bucket: BUCKET,
-      Key: `img/${id}.png`,
-      Body: image,
-    },
-  });
-  const metadataUpload = new Upload({
-    client: r2,
-    params: {
-      Bucket: BUCKET,
-      Key: `data/${id}.json`,
-      Body: JSON.stringify(metadata),
-    },
-  });
-
-  await Promise.all([imageUpload.done(), metadataUpload.done()]);
+  await Promise.all([
+    uploadImage(id, image),
+    uploadMetadata(id, metadata),
+  ]);
 
   return {
     id,
@@ -152,6 +208,102 @@ program
     app.listen(process.env.PORT, () => {
       console.log(`Server listening on port ${process.env.PORT}`);
     });
+  });
+
+program
+  .command("generate-all")
+  .description("Generate all images and blurbs")
+  .action(async () => {
+    for (let id=2982; id <= 10000; id++) {
+      console.log(id);
+      
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          await generate(id);
+          break; // If successful, exit the loop
+        } catch (error) {
+          retries -= 1;
+          console.error(`Failed to generate for id ${id}. Retries left: ${retries}`, error);
+          if (retries === 0) throw error; // Rethrow the error if no retries are left
+        }
+      }
+    }
+    console.log('done');
+  });
+
+program
+  .command("counter")
+  .action(async () => {
+    const dataKeys = await listKeysByPrefix("data/");
+    console.log(dataKeys.length);
+    console.log(dataKeys[0]);
+    const regex = /^data\/(\d+)\.json$/;
+    const tokenIds = dataKeys.map(key => {
+      const m = key.match(regex);
+      //console.log(m);
+      if (!m) {
+        console.log(key);
+      }
+      return m ? parseInt(m[1]) : null;
+    }).filter(id => id !== null).sort((a, b) => a - b);
+    console.log(tokenIds.length);
+    console.log(tokenIds[0]);
+    console.log(tokenIds[tokenIds.length - 1]);
+    console.log(tokenIds);
+  });
+
+program
+  .command("replace-image")
+  .description("Replace the image for an existing ID")
+  .action(async () => {
+    const id = 4;
+    const prompt = new ImagePrompt(id);
+    const imageGenerator = new StableDiffusionLightningImageGenerator();
+    const image = await imageGenerator.generate(prompt.text());
+    await uploadImage(id, image);
+    console.log('done');
+  });
+
+program
+  .command("regenerate-blurb")
+  .description("Regenerate the blurb for an existing ID")
+  .action(async () => {
+    const id = 23;
+    const metadata = await downloadMetadata(id);
+    const blurbGenerator = new BlurbGenerator(id);
+    metadata.description = await blurbGenerator.generate();
+    await uploadMetadata(id, metadata);
+    console.log('done');
+  });
+
+program
+  .command("replace-blurb")
+  .description("Replace the blurb for an existing image")
+  .action(async () => {
+    const id = 23;
+    const blurb = "I can tell you about a particular eyeball that was once the prized possession of a brilliant alchemist, who used its mystical powers to transmute base metals into rare gemstones and lived a life of luxurious extravagance in a candlelit mansion surrounded by a collection of oversized, gemstone-encrusted hourglasses.";
+    
+    const metadata = await downloadMetadata(id);
+    
+    metadata.description = blurb;
+    
+    await uploadMetadata(id, metadata);
+    console.log('done');
+  });
+
+program
+  .command("review-blurbs")
+  .description("Review the existing blurbs")
+  .action(async () => {
+    const filename = path.join(__dirname, 'blurbs.txt');
+    await fs.unlink(filename);
+    for (let id=1; id <= 33; id++) {
+      console.log(id);
+      const metadata = await downloadMetadata(id);
+      await fs.appendFile(filename, `${id}\n${metadata.description}\n\n`);
+    }
+    console.log('done');
   });
 
 program
