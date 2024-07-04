@@ -202,10 +202,22 @@ app.get('/image/:id.png', asyncHandler(async (req, res) => {
   const id = req.params.id;
   console.log(`get image ${id}`);
 
+  const tokenId = parseInt(id);
+  if (isNaN(tokenId)) {
+    res.status(400).json({ error: "Invalid token ID" });
+    return;
+  }
+
+  const maxTokenId = await getCurrentMaxTokenId();
+  if (tokenId > maxTokenId) {
+    res.status(400).json({ error: "Token not minted yet" });
+    return;
+  }
+
   // download the image from the S3 bucket
   const obj = await r2.send(new GetObjectCommand({
     Bucket: BUCKET,
-    Key: `img/${id}.png`
+    Key: `img/${tokenId}.png`
   }));
   
   res.set('Content-Type', 'image/png');
@@ -217,10 +229,22 @@ app.get('/thumb/:id.png', asyncHandler(async (req, res) => {
   const id = req.params.id;
   console.log(`get thumbnail ${id}`);
 
+  const tokenId = parseInt(id);
+  if (isNaN(tokenId)) {
+    res.status(400).json({ error: "Invalid token ID" });
+    return;
+  }
+
+  const maxTokenId = await getCurrentMaxTokenId();
+  if (tokenId > maxTokenId) {
+    res.status(400).json({ error: "Token not minted yet" });
+    return;
+  }
+
   // download the image from the S3 bucket
   const obj = await r2.send(new GetObjectCommand({
     Bucket: BUCKET,
-    Key: `thumb/${id}.png`
+    Key: `thumb/${tokenId}.png`
   }));
 
   res.set('Content-Type', 'image/png');
@@ -232,10 +256,22 @@ app.get('/metadata/:id.json', asyncHandler(async (req, res) => {
   const id = req.params.id;
   console.log(`get metadata ${id}`);
 
+  const tokenId = parseInt(id);
+  if (isNaN(tokenId)) {
+    res.status(400).json({ error: "Invalid token ID" });
+    return;
+  }
+
+  const maxTokenId = await getCurrentMaxTokenId();
+  if (tokenId > maxTokenId) {
+    res.status(400).json({ error: "Token not minted yet" });
+    return;
+  }
+
   // download the metadata from the S3 bucket
   const obj = await r2.send(new GetObjectCommand({
     Bucket: BUCKET,
-    Key: `data/${id}.json`
+    Key: `data/${tokenId}.json`
   }));
 
   res.set('Content-Type', 'application/json');
@@ -271,7 +307,7 @@ if (process.env.NODE_ENV === "production") {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: 'An unexpected error occurred' });
+  res.status(500).json({ error: err.message });
 });
 
 // program commands
