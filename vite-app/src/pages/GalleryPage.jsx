@@ -9,7 +9,7 @@ export default function GalleryPage() {
   useEffect(() => {
     const fetchTokenIds = async () => {
       setLoading(true);
-      const ids = Array.from({ length: 2981 }, (_, i) => i + 1);
+      const ids = Array.from({ length: 10000 }, (_, i) => i + 1);
       setTokenIds(ids);
       setLoading(false);
     };
@@ -48,12 +48,15 @@ export default function GalleryPage() {
       <h1>Gallery</h1>
       <div className="gallery">
         {tokenIds.map(tokenId => (
-          <Link key={tokenId} to={`/view/${tokenId}`}>
-            <img
-              data-src={`/image/${tokenId}.png`}
-              className="thumbnail"
-              />
-          </Link>
+          <div className="thumbnail-container">
+            <Link key={tokenId} to={`/view/${tokenId}`}>
+              <img
+                data-src={`/thumb/${tokenId}.png`}
+                className="thumbnail"
+                />
+              <div className="overlay">#{tokenId}</div>
+            </Link>
+          </div>
         ))}
       </div>
     </div>

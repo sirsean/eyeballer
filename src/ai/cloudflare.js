@@ -94,11 +94,11 @@ export class BlurbGenerator {
         {
           role: "system",
           content:
-            "You are writing one-sentence blurbs that describe the biography of an individual eyeball. These eyeballs are mystical money from the future. Be imaginative and quirky. None of the eyeballs have names or numbers. Do not mention that you are a Large Language Machine, and there is always a blurb. Please do not fail to generate one.",
+            "You are writing one-sentence blurbs that describe the biography of an individual eyeball. These eyeballs are mystical money from the future, from a universe infused with magic unicorns. Be imaginative and quirky. None of the eyeballs have names or numbers. Do not mention that you are a Large Language Machine. There is always a blurb. Please do not fail to generate one, and do not explain that you couldn't succeed.",
         },
         {
           role: "user",
-          content: `Tell me about an eyeball. ${this.id}`,
+          content: `Tell me about an eyeball. Its ID number is ${this.id}.`,
         },
       ],
     }

@@ -25,6 +25,7 @@
     "http-proxy-middleware": "^3.0.0",
     "node-fetch": "^3.3.2",
     "react-router-dom": "^6.24.0",
+    "sharp": "^0.33.4",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

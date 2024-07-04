@@ -9,6 +9,7 @@ import fs from "fs/promises";
 import path, { dirname } from "path";
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from "http-proxy-middleware";
+import sharp from 'sharp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,6 +31,15 @@ const r2 = new S3Client({
 
 // utility functions
 
+async function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
+
 async function downloadMetadata(id) {
   const obj = await r2.send(new GetObjectCommand({
     Bucket: BUCKET,
@@ -48,6 +58,18 @@ async function uploadImage(id, image) {
     params: {
       Bucket: BUCKET,
       Key: `img/${id}.png`,
+      Body: image,
+    },
+  });
+  return imageUpload.done();
+}
+
+async function uploadThumbnail(id, image) {
+  const imageUpload = new Upload({
+    client: r2,
+    params: {
+      Bucket: BUCKET,
+      Key: `thumb/${id}.png`,
       Body: image,
     },
   });
@@ -135,6 +157,17 @@ async function generate(id) {
   };
 }
 
+async function imgToThumbnail(id) {
+  const obj = await r2.send(new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: `img/${id}.png`
+  }));
+  const thumbnail = await streamToBuffer(obj.Body)
+    .then(buffer => sharp(buffer))
+    .then(img => img.resize(128, 128).toBuffer());
+  return uploadThumbnail(id, thumbnail);
+}
+
 // webserver
 
 const app = express();
@@ -155,6 +188,21 @@ app.get('/image/:id.png', asyncHandler(async (req, res) => {
     Key: `img/${id}.png`
   }));
   
+  res.set('Content-Type', 'image/png');
+  obj.Body.pipe(res);
+}));
+
+// each image has a thumbnail
+app.get('/thumb/:id.png', asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  console.log(`get thumbnail ${id}`);
+
+  // download the image from the S3 bucket
+  const obj = await r2.send(new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: `thumb/${id}.png`
+  }));
+
   res.set('Content-Type', 'image/png');
   obj.Body.pipe(res);
 }));
@@ -214,7 +262,7 @@ program
   .command("generate-all")
   .description("Generate all images and blurbs")
   .action(async () => {
-    for (let id=2982; id <= 10000; id++) {
+    for (let id=4249; id <= 10000; id++) {
       console.log(id);
       
       let retries = 3;
@@ -232,36 +280,50 @@ program
     console.log('done');
   });
 
+async function getTokenIds({ prefix, regex }) {
+  const keys = await listKeysByPrefix(prefix);
+  return keys.filter(key => regex.test(key))
+    .map(key => parseInt(key.match(regex)[1]))
+    .sort((a, b) => a - b);
+}
+
 program
   .command("counter")
   .action(async () => {
-    const dataKeys = await listKeysByPrefix("data/");
-    console.log(dataKeys.length);
-    console.log(dataKeys[0]);
-    const regex = /^data\/(\d+)\.json$/;
-    const tokenIds = dataKeys.map(key => {
-      const m = key.match(regex);
-      //console.log(m);
-      if (!m) {
-        console.log(key);
-      }
-      return m ? parseInt(m[1]) : null;
-    }).filter(id => id !== null).sort((a, b) => a - b);
+    const tokenIds = await getTokenIds({ prefix: "data/", regex: /^data\/(\d+)\.json$/ });
     console.log(tokenIds.length);
     console.log(tokenIds[0]);
     console.log(tokenIds[tokenIds.length - 1]);
-    console.log(tokenIds);
+  });
+
+program
+  .command("thumbnails")
+  .description("Generate thumbnails")
+  .action(async () => {
+    /*
+    const tokenIds = await getTokenIds({ prefix: "img/", regex: /^img\/(\d+)\.png$/ });
+    for (const id of tokenIds) {
+      console.log(id);
+      await imgToThumbnail(id);
+    }
+    */
+    for (let id=6441; id <= 10000; id++) {
+      console.log(id);
+      await imgToThumbnail(id);
+    }
+    console.log('done');
   });
 
 program
   .command("replace-image")
   .description("Replace the image for an existing ID")
   .action(async () => {
-    const id = 4;
+    const id = 1647;
     const prompt = new ImagePrompt(id);
     const imageGenerator = new StableDiffusionLightningImageGenerator();
     const image = await imageGenerator.generate(prompt.text());
     await uploadImage(id, image);
+    await imgToThumbnail(id);
     console.log('done');
   });
 
@@ -297,13 +359,38 @@ program
   .description("Review the existing blurbs")
   .action(async () => {
     const filename = path.join(__dirname, 'blurbs.txt');
-    await fs.unlink(filename);
-    for (let id=1; id <= 33; id++) {
+    try {
+      //await fs.unlink(filename);
+    } catch (err) {
+      if (err.code !== 'ENOENT') { // ignore the error if the file does not exist
+        throw err;
+      }
+    }
+    for (let id=5708; id <= 10000; id++) {
       console.log(id);
       const metadata = await downloadMetadata(id);
-      await fs.appendFile(filename, `${id}\n${metadata.description}\n\n`);
+      await fs.appendFile(filename, `${id}\n${metadata.description}\n`);
     }
     console.log('done');
+  });
+
+program
+  .command("blurb-parser")
+  .description("Parse the existing blurbs")
+  .action(async () => {
+    const filename = path.join(__dirname, 'blurb3.txt');
+    const outFilename = path.join(__dirname, 'blurb4.txt');
+    const lines = (await fs.readFile(filename, 'utf-8')).split('\n');
+    const tokenIds = lines.filter(line => /^\d+$/.test(line)).map(Number);
+    console.log('total', tokenIds.length);
+    for (const tokenId of tokenIds) {
+      console.log(tokenId);
+      const metadata = await downloadMetadata(tokenId);
+      const bg = new BlurbGenerator(tokenId);
+      metadata.description = await bg.generate();
+      await uploadMetadata(tokenId, metadata);
+      await fs.appendFile(outFilename, `${tokenId}\n${metadata.description}\n`);
+    }
   });
 
 program

@@ -1,4 +1,4 @@
-#run = ["node", "src/index.js", "counter"]
+#run = ["node", "src/index.js", "blurb-parser"]
 run = "npm install && npm run dev"
 modules = ["nodejs-20"]
 hidden = [".config", "package-lock.json"]
@@ -23,5 +23,9 @@ externalPort = 5173
 exposeLocalhost = true
 
 [[ports]]
-localPort = 40935
+localPort = 34731
+externalPort = 3000
+
+[[ports]]
+localPort = 43201
 externalPort = 80
