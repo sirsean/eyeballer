@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 export default function HomePage() {
   return (
     <div className="HomePage">
-      <h1>Welcome to Eyeballer</h1>
-      <Link to="/gallery">Gallery</Link>
-      <Link to="/view/1">View #1</Link>
+      <p>You are here because you like defi.</p>
+      <p>You are here because you like NFTs.</p>
+      <p>You are here because you like Dinero Protocol.</p>
+      <p>You are here because you like eyeballs.</p>
+      <p>Those things are all <em>weird</em>. But just how weird are you? This shit is pretty fucking weird.</p>
     </div>
   );
 }

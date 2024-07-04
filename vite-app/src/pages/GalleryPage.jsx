@@ -56,11 +56,10 @@ export default function GalleryPage() {
   
   return (
     <div className="GalleryPage">
-      <h1>Gallery</h1>
       <div className="gallery">
         {tokenIds.map(tokenId => (
-          <div className="thumbnail-container">
-            <Link key={tokenId} to={`/view/${tokenId}`}>
+          <div key={tokenId} className="thumbnail-container">
+            <Link to={`/view/${tokenId}`}>
               <img
                 data-src={`/thumb/${tokenId}.png`}
                 className="thumbnail"

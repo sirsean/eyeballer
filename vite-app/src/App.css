@@ -9,6 +9,10 @@
   left: 0;
 }
 
+.HomePage {
+  font-size: 1.2rem;
+}
+
 .ViewPage img.Token {
   max-width: 100%;
   border-radius: 8px;
