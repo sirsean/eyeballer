@@ -10,6 +10,8 @@ import path, { dirname } from "path";
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from "http-proxy-middleware";
 import sharp from 'sharp';
+import Client from "@replit/database";
+import { ok } from "assert";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,6 +20,10 @@ const __dirname = dirname(__filename);
 
 const BUCKET = "eyeballer";
 const HOSTNAME = "eyeballer.replit.app";
+
+// database client
+
+const db = new Client();
 
 // R2 client
 const r2 = new S3Client({
@@ -30,6 +36,20 @@ const r2 = new S3Client({
 });
 
 // utility functions
+
+async function getCurrentMaxTokenId() {
+  return db.get("max_token_id")
+    .then(({ ok, value }) => {
+      if (!ok) {
+        return 0;
+      }
+      return value;
+    });
+}
+
+async function setCurrentMaxTokenId(id) {
+  await db.set("max_token_id", id);
+}
 
 async function streamToBuffer(stream) {
   return new Promise((resolve, reject) => {
@@ -221,6 +241,15 @@ app.get('/metadata/:id.json', asyncHandler(async (req, res) => {
   res.set('Content-Type', 'application/json');
   obj.Body.pipe(res);
 }));
+
+// api endpoints
+
+app.get('/api/max-token-id', asyncHandler(async (req, res) => {
+  const maxTokenId = await getCurrentMaxTokenId();
+  res.json({ maxTokenId });
+}));
+
+// set up the UI server
 
 if (process.env.NODE_ENV === "production") {
   // serve static files from vite-app
@@ -433,6 +462,16 @@ program
     await upload.done();
 
     console.log("done");
+  });
+
+program
+  .command("max-token")
+  .description("Get the max token count")
+  .action(async () => {
+    const maxToken = await getCurrentMaxTokenId();
+    console.log(maxToken);
+    await setCurrentMaxTokenId(10);
+    console.log(await getCurrentMaxTokenId());
   });
 
 await program.parseAsync(process.argv);

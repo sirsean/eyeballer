@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+async function fetchMaxTokenId() {
+  const response = await fetch("/api/max-token-id");
+  const data = await response.json();
+  return data.maxTokenId;
+}
+
 export default function GalleryPage() {
   const [tokenIds, setTokenIds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -9,7 +15,8 @@ export default function GalleryPage() {
   useEffect(() => {
     const fetchTokenIds = async () => {
       setLoading(true);
-      const ids = Array.from({ length: 10000 }, (_, i) => i + 1);
+      const maxTokenId = await fetchMaxTokenId();
+      const ids = Array.from({ length: maxTokenId }, (_, i) => i + 1);
       setTokenIds(ids);
       setLoading(false);
     };
@@ -42,6 +49,10 @@ export default function GalleryPage() {
       }
     };
   }, [tokenIds]);
+
+  if (loading) {
+    return <div className="Loading">Loading...</div>;
+  }
   
   return (
     <div className="GalleryPage">
