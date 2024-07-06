@@ -318,8 +318,9 @@ program
   .command("server")
   .description("Start the server")
   .action(async () => {
-    app.listen(process.env.PORT, () => {
-      console.log(`Server listening on port ${process.env.PORT}`);
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`Server listening on port ${port}`);
     });
   });
 
@@ -506,7 +507,7 @@ program
   .action(async () => {
     const maxToken = await getCurrentMaxTokenId();
     console.log(maxToken);
-    await setCurrentMaxTokenId(10);
+    await setCurrentMaxTokenId(10000);
     console.log(await getCurrentMaxTokenId());
   });
 
