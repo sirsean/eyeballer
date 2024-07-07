@@ -8,9 +8,11 @@
     "build": "cd vite-app && npm run build",
     "postinstall": "cd vite-app && npm install",
     "start": "npm run build && node src/index.js server",
-    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:express\"",
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:express\" \"npm run dev:contract\"",
     "dev:vite": "cd vite-app && npm run dev",
     "dev:express": "node src/index.js server",
+    "dev:contract": "cd contract && npx hardhat node",
+    "test:contract": "cd contract && npx hardhat test",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
