@@ -12,6 +12,7 @@
     "dev:vite": "cd vite-app && npm run dev",
     "dev:express": "node src/index.js server",
     "dev:contract": "cd contract && npx hardhat node",
+    "dev:contract:deploy": "cd contract && npx hardhat --network localhost ignition deploy ./ignition/modules/Eyeballer.js",
     "test:contract": "cd contract && npx hardhat test",
     "test": "npm run test:contract"
   },
