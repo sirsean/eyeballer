@@ -60,11 +60,11 @@ function MyGallery() {
     }),
   });
 
-  if (balanceIsPending || tokensIsPending) {
+  if (balanceIsPending || (balance > 0n && tokensIsPending)) {
     return <div className="Loading">Loading...</div>;
   }
 
-  const tokenIds = tokenIdResults.map(result => result.result).map(tokenId => Number(tokenId));
+  const tokenIds = (tokenIdResults || []).map(result => result.result).map(tokenId => Number(tokenId));
   
   return (
     <Gallery tokenIds={tokenIds} />
