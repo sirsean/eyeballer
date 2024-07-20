@@ -13,7 +13,7 @@ export default function NavBar() {
       <div className="navbar-right">
         <Link to="/gallery" className="navbar-link">Gallery</Link>
         <Link to="/mint" className="navbar-link">Mint</Link>
-        <button className="navbar-button">Connect Wallet</button>
+        <w3m-button />
       </div>
     </nav>
   );

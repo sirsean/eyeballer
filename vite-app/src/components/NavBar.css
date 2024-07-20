@@ -56,3 +56,7 @@
 .navbar-button:hover {
   background-color: #0056b3;
 }
+
+w3m-button {
+  margin-left: 10px;
+}
