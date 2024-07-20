@@ -1,74 +1,84 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useReadContract, useReadContracts, useAccount } from "wagmi";
+import { EyeballerAddress } from '../chains';
+import EyeballerABI from '../abi/EyeballerABI.json';
+import GalleryToggle from '../components/GalleryToggle';
+import Gallery from '../components/Gallery';
 
-async function fetchMaxTokenId() {
-  const response = await fetch("/api/max-token-id");
-  const data = await response.json();
-  return data.maxTokenId;
-}
-
-export default function GalleryPage() {
+function FullGallery() {
   const [tokenIds, setTokenIds] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const observer = useRef(null);
+
+  const {
+    data: totalSupply,
+    isPending: totalSupplyIsPending,
+  } = useReadContract({
+    address: EyeballerAddress,
+    abi: EyeballerABI.abi,
+    functionName: 'totalSupply',
+  });
 
   useEffect(() => {
-    const fetchTokenIds = async () => {
-      setLoading(true);
-      const maxTokenId = await fetchMaxTokenId();
-      const ids = Array.from({ length: maxTokenId }, (_, i) => i + 1);
+    if (totalSupply) {
+      const ids = Array.from({ length: Number(totalSupply) }, (_, i) => i + 1);
       setTokenIds(ids);
-      setLoading(false);
-    };
-    fetchTokenIds();
-  }, []);
-
-  useEffect(() => {
-    if (observer.current) {
-      observer.current.disconnect();
     }
+  }, [totalSupply]);
 
-    observer.current = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.dataset.src;
-          observer.current.unobserve(img);
-        }
-      });
-    });
-
-    const imgs = document.querySelectorAll("img[data-src]");
-    imgs.forEach(img => {
-      observer.current.observe(img);
-    });
-
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
-  }, [tokenIds]);
-
-  if (loading) {
+  if (totalSupplyIsPending) {
     return <div className="Loading">Loading...</div>;
   }
   
   return (
+    <Gallery tokenIds={tokenIds} />
+  );
+}
+
+function MyGallery() {
+  const { address } = useAccount();
+
+  const {
+    data: balance,
+    isPending: balanceIsPending,
+  } = useReadContract({
+    address: EyeballerAddress,
+    abi: EyeballerABI.abi,
+    functionName: 'balanceOf',
+    args: [address],
+  });
+
+  const {
+    data: tokenIdResults,
+    isPending: tokensIsPending,
+  } = useReadContracts({
+    contracts: Array.from({ length: Number(balance) }, (_, i) => i).map(index => {
+      return {
+        address: EyeballerAddress,
+        abi: EyeballerABI.abi,
+        functionName: 'tokenOfOwnerByIndex',
+        args: [address, index],
+      };
+    }),
+  });
+
+  if (balanceIsPending || tokensIsPending) {
+    return <div className="Loading">Loading...</div>;
+  }
+
+  const tokenIds = tokenIdResults.map(result => result.result).map(tokenId => Number(tokenId));
+  
+  return (
+    <Gallery tokenIds={tokenIds} />
+  );
+}
+
+export default function GalleryPage() {
+  const [showMine, setShowMine] = useState(false);
+
+  return (
     <div className="GalleryPage">
-      <div className="gallery">
-        {tokenIds.map(tokenId => (
-          <div key={tokenId} className="thumbnail-container">
-            <Link to={`/view/${tokenId}`}>
-              <img
-                data-src={`/thumb/${tokenId}.png`}
-                className="thumbnail"
-                />
-              <div className="overlay">#{tokenId}</div>
-            </Link>
-          </div>
-        ))}
-      </div>
+      <GalleryToggle showMine={showMine} setShowMine={setShowMine} />
+      {showMine && <MyGallery />}
+      {!showMine && <FullGallery />}
     </div>
   );
 }

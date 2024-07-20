@@ -11,7 +11,6 @@ import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from "http-proxy-middleware";
 import sharp from 'sharp';
 import Client from "@replit/database";
-import { ok } from "assert";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

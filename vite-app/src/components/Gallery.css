@@ -1,0 +1,39 @@
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.thumbnail-container {
+  position: relative;
+}
+
+.gallery .thumbnail {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.gallery .thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.gallery .overlay {
+  position: absolute;
+  bottom: 12px;
+  left: 6px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 16px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  transition: transform 0.2s;
+}
+
+.gallery .overlay:hover {
+  background-color: rgba(0, 112, 147, 0.8);
+}
