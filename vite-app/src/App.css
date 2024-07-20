@@ -30,3 +30,14 @@
 .MintPage form {
   text-align: center;
 }
+
+.error {
+  padding: 2em;
+  text-align: center;
+  color: #941414;
+  font-size: 1.4rem;
+}
+
+.error button {
+  margin-top: 1em;
+}

@@ -1,7 +1,14 @@
 import express from "express";
 import { asyncHandler } from "./middleware.js";
-import { getCurrentMaxTokenId } from "../data/db.js";
+import { getCurrentMaxTokenId, setCurrentMaxTokenId } from "../data/db.js";
 import { getObject } from "../data/r2.js";
+import { ethers } from "ethers";
+import { fileURLToPath } from 'url';
+import path, { dirname } from 'path';
+import fs from 'fs/promises';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // webserver
 
@@ -80,6 +87,41 @@ app.get('/metadata/:id.json', asyncHandler(async (req, res) => {
 }));
 
 // api endpoints
+
+app.post('/api/:id/check', asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  console.log(`check ${id}`);
+
+  const tokenId = parseInt(id);
+  if (isNaN(tokenId)) {
+    res.status(400).json({ error: "Invalid token ID" });
+    return;
+  }
+
+  const maxTokenId = await getCurrentMaxTokenId();
+  if (tokenId <= maxTokenId) {
+    res.json({ ok: true });
+    return;
+  }
+  
+  const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+  const eyeballer = await fs.readFile(path.join(__dirname, '..', 'abi', 'EyeballerABI.json'), 'utf8').then(JSON.parse);
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+  const contract = new ethers.Contract(address, eyeballer.abi, provider);
+
+  const totalSupply = await contract.totalSupply();
+
+  if (totalSupply > maxTokenId) {
+    setCurrentMaxTokenId(totalSupply);
+  }
+
+  if (tokenId > totalSupply) {
+    res.status(400).json({ error: "Token not minted yet" });
+    return;
+  }
+
+  res.json({ ok: true });
+}));
 
 app.get('/api/max-token-id', asyncHandler(async (req, res) => {
   const maxTokenId = await getCurrentMaxTokenId();

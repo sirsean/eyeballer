@@ -55,7 +55,7 @@ program
   .action(async () => {
     const maxToken = await getCurrentMaxTokenId();
     console.log(maxToken);
-    await setCurrentMaxTokenId(10000);
+    await setCurrentMaxTokenId(0);
     console.log(await getCurrentMaxTokenId());
   });
 

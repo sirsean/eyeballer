@@ -38,7 +38,9 @@ export default function MintPage() {
       const tokenIds = logs.map(log => log.args).filter(arg => arg.to == address).map(arg => arg.tokenId);
       if (isConfirmed && tokenIds.length > 0) {
         const tokenId = tokenIds[tokenIds.length - 1];
-        navigate(`/view/${tokenId}`);
+        fetch(`/api/${tokenId}/check`, { method: 'POST' }).then(res => res.json()).then(({ ok, error }) => {
+          navigate(`/view/${tokenId}`);
+        });
       }
     },
   });
@@ -57,11 +59,14 @@ export default function MintPage() {
   
   return (
     <div className="MintPage">
-      <p>Pluck one of these and become an Eyeballer. Maybe you'll get a really cool one.</p>
-      <form onSubmit={submit}>
-        {!priceIsPending &&
-          <button type="submit" disabled={isMinting || priceIsPending}>{isMinting ? 'Minting...' : `Mint (${formatUnits(price, 18)} ETH)`}</button>}
-      </form>
+      {(!isConfirming && !isConfirmed) &&
+        <>
+          <p>Pluck one of these and become an Eyeballer. Maybe you'll get a really cool one.</p>
+          <form onSubmit={submit}>
+            {!priceIsPending &&
+              <button type="submit" disabled={isMinting || priceIsPending}>{isMinting ? 'Minting...' : `Mint (${formatUnits(price, 18)} ETH)`}</button>}
+          </form>
+        </>}
       {hash && <p>{hash}</p>}
       {isConfirming && <p>Confirming...</p>}
       {isConfirmed && <p>Confirmed!</p>}

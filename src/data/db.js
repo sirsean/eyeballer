@@ -17,5 +17,5 @@ export async function getCurrentMaxTokenId() {
 }
 
 export async function setCurrentMaxTokenId(id) {
-  await db.set("max_token_id", id);
+  await db.set("max_token_id", Number(id));
 }
