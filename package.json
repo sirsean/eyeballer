@@ -16,7 +16,7 @@
     "dev:contract:seed": "cd contract && npx hardhat --network localhost run scripts/seed.js",
     "dev:contract:nonce": "cd contract && npx hardhat --network localhost run scripts/nonce.js",
     "prod:contract:deploy": "cd contract && npx hardhat --network optimism ignition deploy ./ignition/modules/Eyeballer.js",
-    "prod:contract:verify": "cd contract && npx hardhat --network optimism verify 0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "prod:contract:verify": "cd contract && npx hardhat --network optimism verify 0x61eF625d36Df6456559ba64b4110bD21e4caf298 1000000000000000",
     "dev:reset-max-token-id": "node src/scripts/reset_max_token.js",
     "test:contract": "cd contract && npx hardhat test",
     "test": "npm run test:contract"

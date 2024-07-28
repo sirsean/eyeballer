@@ -104,7 +104,8 @@ app.post('/api/:id/check', asyncHandler(async (req, res) => {
     return;
   }
   
-  const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+  //const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // hardhat
+  const address = '0x61eF625d36Df6456559ba64b4110bD21e4caf298'; // optimism
   const eyeballer = await fs.readFile(path.join(__dirname, '..', 'abi', 'EyeballerABI.json'), 'utf8').then(JSON.parse);
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
   const contract = new ethers.Contract(address, eyeballer.abi, provider);

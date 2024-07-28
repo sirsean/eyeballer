@@ -31,3 +31,10 @@ As you develop, the max-token-id will increment itself with the test mints. You 
 ```bash
 MAX_TOKEN_ID=0 npm run dev:reset-max-token-id
 ```
+
+## Deploy
+
+```bash
+npm run prod:contract:deploy
+npm run prod:contract:verify
+```

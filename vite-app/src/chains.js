@@ -17,9 +17,10 @@ const hardhat = {
 }
 
 // make sure this contains the chain you want for your env
-export const chains = [hardhat];
+export const chains = [optimism];
 
 export const projectId = '098f193a315fe026b6a8931f6359d9e2';
 
 // make sure this is pointed at the right address
-export const EyeballerAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+// export const EyeballerAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // hardhat
+export const EyeballerAddress = '0x61eF625d36Df6456559ba64b4110bD21e4caf298'; // optimism
