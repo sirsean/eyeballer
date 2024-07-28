@@ -34,6 +34,7 @@ export default function MintPage() {
     address: EyeballerAddress,
     abi: EyeballerABI.abi,
     eventName: 'Mint',
+    pollingInterval: 1000,
     onLogs: (logs) => {
       const tokenIds = logs.map(log => log.args).filter(arg => arg.to == address).map(arg => arg.tokenId);
       if (isConfirmed && tokenIds.length > 0) {
@@ -67,9 +68,16 @@ export default function MintPage() {
               <button type="submit" disabled={isMinting || priceIsPending}>{isMinting ? 'Minting...' : `Mint (${formatUnits(price, 18)} ETH)`}</button>}
           </form>
         </>}
-      {hash && <p>{hash}</p>}
+      {hash && <p><a target="_blank" href={`https://optimistic.etherscan.io/tx/${hash}`}>View Transaction</a></p>}
       {isConfirming && <p>Confirming...</p>}
-      {isConfirmed && <p>Confirmed!</p>}
+      {isConfirmed && 
+        <>
+          <p>Confirmed!</p>
+          <p>As we speak, the AI computer is generating an eyeball picture just for you, and making up some wacky story about it.</p>
+          <p>Meanwhile we wait to receive the Mint event from the blockchain, which will tell us your tokenId, at which point we will redirect you to the newly minted picture.</p>
+          <p>I agree with you that this is taking too long! But, you know, a little patience. It's all probably working fine.</p>
+          <p>Cross your fingers for a cool one...</p>
+        </>}
       {error && <p>Error: {error.shortMessage || error.message}</p>}
     </div>
   );
