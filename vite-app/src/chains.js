@@ -1,4 +1,5 @@
-import { optimism } from 'viem/chains'
+import { optimism } from 'viem/chains';
+import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 
 // for local development only
 const hardhat = {
@@ -24,3 +25,17 @@ export const projectId = '098f193a315fe026b6a8931f6359d9e2';
 // make sure this is pointed at the right address
 // export const EyeballerAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // hardhat
 export const EyeballerAddress = '0x61eF625d36Df6456559ba64b4110bD21e4caf298'; // optimism
+
+const metadata = {
+  name: 'Eyeballer',
+  description: 'Eyeballer NFT Dapp',
+  //url: 'https://eyeballer.replit.app', // origin must match your domain & subdomain
+  icons: ['https://avatars.githubusercontent.com/u/37784886']
+}
+
+export const config = defaultWagmiConfig({
+  chains,
+  projectId,
+  metadata,
+  defaultChain: optimism,
+});

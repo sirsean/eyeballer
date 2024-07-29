@@ -72,11 +72,13 @@ function MyGallery() {
 }
 
 export default function GalleryPage() {
+  const { isConnected } = useAccount();
   const [showMine, setShowMine] = useState(false);
 
   return (
     <div className="GalleryPage">
-      <GalleryToggle showMine={showMine} setShowMine={setShowMine} />
+      {isConnected &&
+        <GalleryToggle showMine={showMine} setShowMine={setShowMine} />}
       {showMine && <MyGallery />}
       {!showMine && <FullGallery />}
     </div>

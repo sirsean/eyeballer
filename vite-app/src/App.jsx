@@ -6,28 +6,13 @@ import GalleryPage from './pages/GalleryPage';
 import ViewPage from './pages/ViewPage';
 import MintPage from './pages/MintPage';
 import './App.css'
-import { projectId, chains } from './chains';
+import { projectId, config } from './chains';
 import { createWeb3Modal } from '@web3modal/wagmi/react'
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const queryClient = new QueryClient()
 
-const metadata = {
-  name: 'Eyeballer',
-  description: 'Eyeballer NFT Dapp',
-  //url: 'https://eyeballer.replit.app', // origin must match your domain & subdomain
-  icons: ['https://avatars.githubusercontent.com/u/37784886']
-}
-
-const config = defaultWagmiConfig({
-  chains,
-  projectId,
-  metadata,
-})
-
-// 3. Create modal
 createWeb3Modal({
   wagmiConfig: config,
   projectId,
